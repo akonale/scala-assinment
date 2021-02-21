@@ -1,8 +1,9 @@
 package co.thebeat.bigdata.takehomeassignment
 
+import co.thebeat.bigdata.takehomeassignment.entity.DriverLocation
 import co.thebeat.bigdata.takehomeassignment.geo.ZoneMapper
 import org.apache.spark.sql.{Dataset, Row, SparkSession}
-import co.thebeat.bigdata.takehomeassignment.storage.{DriverDataReader, Reader, Writer}
+import co.thebeat.bigdata.takehomeassignment.storage.{DriverLocationDataReader, Reader, Writer}
 import co.thebeat.bigdata.takehomeassignment.session.Sessionizer
 import co.thebeat.bigdata.takehomeassignment.reducer.Reducer
 
@@ -24,7 +25,7 @@ object Assignment extends App {
   // The first row in the CSV is the header.
   //
   // @Note: Method `read` must follow all constraints that the `Reader` trait has set.
-  lazy val reader: Reader = new DriverDataReader(spark)
+  lazy val reader: Reader = new DriverLocationDataReader(spark)
 
   // Should save a Dataset[Row] as a CSV file. The first line of the CSV should be the header.
   //
@@ -51,11 +52,11 @@ object Assignment extends App {
   // For rows that map to more than one zone the class will map to any of them (randomly).
   //
   // @Note: Method `mapToZone` must follow all constraints that the `ZoneMapper` trait has set.
-  lazy val zoneMapper: ZoneMapper = ???
+  lazy val zoneMapper: ZoneMapper = new DriverZoneMapper()
 
   // You need to assemble the different components of the assignment, so to be able to run the pre-processing pipeline.
   def runPipeline(): scala.util.Try[Unit] = {
-    val value: Try[Dataset[Row]] = reader.read("/Users/akonale/IdeaProjects/beat/bigdata-challenge/assignment-project/src/main/resources/test_data.csv")
+    val value: Try[Dataset[DriverLocation]] = reader.read("/Users/akonale/IdeaProjects/beat/bigdata-challenge/assignment-project/src/main/resources/test_data.csv")
     Try(value.get.show())
   }
 

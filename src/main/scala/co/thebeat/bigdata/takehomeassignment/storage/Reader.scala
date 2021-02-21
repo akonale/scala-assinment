@@ -1,7 +1,8 @@
 package co.thebeat.bigdata.takehomeassignment.storage
 
-import scala.util.Try
+import co.thebeat.bigdata.takehomeassignment.entity.DriverLocation
 
+import scala.util.Try
 import org.apache.spark.sql.{Dataset, Row}
 
 trait Reader {
@@ -34,5 +35,5 @@ trait Reader {
    * @return Loads the data and filters out malformed rows and rows with null values, returning the
    *         result as a `Dataset[Row]`.
    */
-  def read(path: String): Try[Dataset[Row]]
+  def read(path: String): Try[Dataset[DriverLocation]]
 }

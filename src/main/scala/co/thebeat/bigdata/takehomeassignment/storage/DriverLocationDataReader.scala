@@ -1,5 +1,7 @@
 package co.thebeat.bigdata.takehomeassignment.storage
 
+import co.thebeat.bigdata.takehomeassignment.entity.DriverLocation
+import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{Dataset, Row, SparkSession}
 
@@ -8,7 +10,7 @@ import scala.util.{Failure, Success, Try}
 /**
  * Created on 20/02/2021.
  */
-class DriverDataReader(spark: SparkSession) extends Reader {
+class DriverLocationDataReader(spark: SparkSession) extends Reader {
   /**
    * Reads the data which are located in the specified path, returning the result as a
    * `Dataset[Row]`.
@@ -38,22 +40,27 @@ class DriverDataReader(spark: SparkSession) extends Reader {
    * @return Loads the data and filters out malformed rows and rows with null values, returning the
    *         result as a `Dataset[Row]`.
    */
-  override def read(path: String): Try[Dataset[Row]] = {
+  override def read(path: String): Try[Dataset[DriverLocation]] = {
     val customSchema = StructType(Array(
       StructField("driver", StringType, nullable = false),
       StructField("id_zone", IntegerType, nullable = false),
       StructField("timestamp", TimestampType, nullable = false))
     )
+    import spark.implicits._
+
+    val schema = ScalaReflection.schemaFor[DriverLocation].dataType.asInstanceOf[StructType]
 
     val triedFrame = Try {
       val frame = spark
         .read
         .option("header", value = true)
-        .option("timestampFormat", "HH:mm:ss")
+        .option("timestampFormat", DriverLocation.timeStampFormat)
         .option("mode", "DROPMALFORMED")
-        .schema(customSchema)
+        .schema(schema)
         .csv(path)
-      frame.filter(row => !row.anyNull)
+      frame
+        .filter(row => !row.anyNull)
+        .as[DriverLocation]
     }
     triedFrame match {
       case Success(value) => Success(value)
