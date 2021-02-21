@@ -1,15 +1,43 @@
 package co.thebeat.bigdata.takehomeassignment.geo
 
+import co.thebeat.bigdata.takehomeassignment.entity.{RawZones, Zone}
 import org.apache.spark.sql.{Dataset, Row, SparkSession}
-import org.locationtech.jts.geom.{GeometryFactory, LinearRing, Point, Polygon}
-import org.locationtech.jts.geom.impl.PackedCoordinateSequence
+import org.json4s.DefaultFormats
+import org.json4s.jackson.JsonMethods.parse
+import org.locationtech.jts.geom.impl.CoordinateArraySequence
+import org.locationtech.jts.geom.{Coordinate, GeometryFactory, LinearRing, Polygon}
 
+import scala.io.Source
 import scala.util.Try
 
 /**
  * Created on 21/02/2021.
  */
 class DriverZoneMapper(spark: SparkSession) extends ZoneMapper {
+
+  def initializeZones(): List[Zone] = {
+    val is = getClass.getResourceAsStream("/zones.json")
+    val jsonString = Source.fromInputStream(is).mkString("")
+
+    implicit val formats = DefaultFormats
+
+    val rawZones = parse(jsonString).extract[RawZones]
+    rawZones.zones.map(
+      rawZone => {
+        val coords: Array[Coordinate] = rawZone.polygon.map(
+          latlng => new Coordinate(latlng.lat, latlng.lng)
+        ).toArray
+        val sequence = new CoordinateArraySequence(coords, 2)
+        val factory = new GeometryFactory();
+
+        val polygon = new Polygon(new LinearRing(sequence, factory), Array[LinearRing](), factory)
+        Zone(rawZone.id_zone, polygon)
+      }
+    )
+
+  }
+
+  val polygons: List[Zone] = initializeZones()
   /**
    * Maps each row to the geographical area or geographical zone it belongs to.
    * If a row does not belong to any zone, it should be filtered out. We consider points that belong exactly to the boundary line
@@ -71,7 +99,8 @@ class DriverZoneMapper(spark: SparkSession) extends ZoneMapper {
    *         The resulting Dataset must contain one additional column id_zone of type Long which cannot contain null values.
    */
   override def mapToZone(input: Dataset[Row], path: String): Try[Dataset[Row]] = {
-    import spark.implicits._
+
+
 
     Try(spark.read.csv(""))
   }

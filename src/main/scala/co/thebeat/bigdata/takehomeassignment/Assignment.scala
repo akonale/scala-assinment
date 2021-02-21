@@ -1,7 +1,7 @@
 package co.thebeat.bigdata.takehomeassignment
 
 import co.thebeat.bigdata.takehomeassignment.entity.DriverLocation
-import co.thebeat.bigdata.takehomeassignment.geo.ZoneMapper
+import co.thebeat.bigdata.takehomeassignment.geo.{DriverZoneMapper, ZoneMapper}
 import org.apache.spark.sql.{Dataset, Row, SparkSession}
 import co.thebeat.bigdata.takehomeassignment.storage.{DriverLocationDataReader, Reader, Writer}
 import co.thebeat.bigdata.takehomeassignment.session.Sessionizer
@@ -52,7 +52,7 @@ object Assignment extends App {
   // For rows that map to more than one zone the class will map to any of them (randomly).
   //
   // @Note: Method `mapToZone` must follow all constraints that the `ZoneMapper` trait has set.
-  lazy val zoneMapper: ZoneMapper = new DriverZoneMapper()
+  lazy val zoneMapper: ZoneMapper = new DriverZoneMapper(spark)
 
   // You need to assemble the different components of the assignment, so to be able to run the pre-processing pipeline.
   def runPipeline(): scala.util.Try[Unit] = {

@@ -1,7 +1,8 @@
 package co.thebeat.bigdata.takehomeassignment.geo
 
+import org.apache.spark.sql.SparkSession
 import org.locationtech.jts.geom.impl.{CoordinateArraySequence, PackedCoordinateSequence}
-import org.locationtech.jts.geom.{Coordinate, GeometryFactory, LinearRing, Point, Polygon}
+import org.locationtech.jts.geom.{Coordinate, GeometryFactory, LinearRing, Point, Polygon, PrecisionModel}
 import org.scalatest.FunSuite
 
 import scala.util.Try
@@ -12,13 +13,30 @@ import scala.util.Try
 class DriverZoneMapperTest extends FunSuite {
 
   test("testMapToZone") {
-    val doubles: Array[Double] = Array[Double](2.11, 3.22)
+    val factory = new GeometryFactory()
+    val forPoint = new CoordinateArraySequence(Array(new Coordinate(51.5,4.8436111)))
+    val point = new Point(forPoint, factory)
 
-    val point = new Point(new PackedCoordinateSequence.Double(doubles, 2), new GeometryFactory())
-    val sequence = new CoordinateArraySequence(Array[Coordinate](), 2)
-    val polygon = new Polygon(new LinearRing(sequence, new GeometryFactory()), Array[LinearRing](), new GeometryFactory())
+    val sequence = new CoordinateArraySequence(
+      Array[Coordinate](
+        new Coordinate(52.1,4.7),
+        new Coordinate(52.1,5.0),
+        new Coordinate(51.1,5.0),
+        new Coordinate(51.1,4.7),
+        new Coordinate(52.1,4.7)
+      ),
+      2)
+    val polygon = new Polygon(new LinearRing(sequence, factory), Array[LinearRing](), factory)
     val bool = point.within(polygon)
-    bool
+    println(bool)
+
+    val sparkSession = SparkSession
+      .builder()
+      .appName("test")
+      .master("local[1]")
+      .getOrCreate()
+
+    println(new DriverZoneMapper(sparkSession).polygons)
   }
 
 }
