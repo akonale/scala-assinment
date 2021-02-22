@@ -1,5 +1,6 @@
 package co.thebeat.bigdata.takehomeassignment.geo
 
+import co.thebeat.bigdata.takehomeassignment.entity.{AugmentedDriverLocation, DriverLocation}
 import org.apache.spark.sql.{Dataset, Row}
 
 import scala.util.Try
@@ -66,5 +67,5 @@ trait ZoneMapper {
    * @return A Dataset[Row] containing a subset (maybe empty) of the rows of the input.
    *         The resulting Dataset must contain one additional column id_zone of type Long which cannot contain null values.
    */
-  def mapToZone(input: Dataset[Row], path: String): Try[Dataset[Row]]
+  def mapToZone(input: Dataset[DriverLocation], path: String): Try[Dataset[AugmentedDriverLocation]]
 }

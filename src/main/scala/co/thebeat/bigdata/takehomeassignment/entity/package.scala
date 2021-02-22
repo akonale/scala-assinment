@@ -4,6 +4,7 @@ import org.locationtech.jts.geom.Polygon
 
 package object entity {
   case class DriverLocation(driver: String, timestamp: java.sql.Timestamp, latitude: Double, longitude: Double)
+  case class AugmentedDriverLocation(driver: String, timestamp: java.sql.Timestamp, latitude: Double, longitude: Double, zoneId: Option[Int])
 
   object DriverLocation {
     val timeStampFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
