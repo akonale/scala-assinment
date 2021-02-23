@@ -107,9 +107,9 @@ class DriverZoneMapper(spark: SparkSession) extends ZoneMapper {
           val maybeZone = polygons
             .find(zone => zone.polygon.contains(point))
           val zoneId = if (maybeZone.isDefined) Some(maybeZone.get.zoneId) else None
-          AugmentedDriverLocation(dl.driver, dl.timestamp, dl.latitude, dl.longitude, zoneId)
+          AugmentedDriverLocation(dl.driver, dl.timestamp, zoneId, dl.latitude, dl.longitude)
         })
-        .filter(adl => adl.zoneId.isDefined)
+        .filter(adl => adl.id_zone.isDefined)
       adls
     }
     triedFrame match {

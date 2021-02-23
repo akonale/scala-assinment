@@ -41,11 +41,6 @@ class DriverLocationDataReader(spark: SparkSession) extends Reader {
    *         result as a `Dataset[Row]`.
    */
   override def read(path: String): Try[Dataset[DriverLocation]] = {
-    val customSchema = StructType(Array(
-      StructField("driver", StringType, nullable = false),
-      StructField("id_zone", IntegerType, nullable = false),
-      StructField("timestamp", TimestampType, nullable = false))
-    )
     import spark.implicits._
 
     val schema = ScalaReflection.schemaFor[DriverLocation].dataType.asInstanceOf[StructType]

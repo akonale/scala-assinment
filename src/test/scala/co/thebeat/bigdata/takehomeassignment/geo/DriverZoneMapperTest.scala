@@ -62,8 +62,8 @@ class DriverZoneMapperTest extends  FunSuite with BeforeAndAfter {
     val driverZone1 = result
       .filter(adl => adl.driver == "driver_zone1")
       .collectAsList().get(0)
-    assert(driverZone1.zoneId.get == 1)
-    assert(driverZone6.zoneId.get == 6)
+    assert(driverZone1.id_zone.get == 1)
+    assert(driverZone6.id_zone.get == 6)
   }
 
 }

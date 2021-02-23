@@ -1,11 +1,15 @@
 package co.thebeat.bigdata.takehomeassignment.reducer
 
 import co.thebeat.bigdata.takehomeassignment.entity.DriverZoneSession
-import org.apache.spark.sql.{Dataset, Row}
+import org.apache.spark.sql.catalyst.expressions.Rank
+import org.apache.spark.sql.{Dataset, Row, SparkSession, functions}
 
 import scala.util.Try
 
-trait Reducer {
+/**
+ * Created on 23/02/2021.
+ */
+class ActiveDriverReducer(spark: SparkSession) extends Reducer {
   /**
    * Finds the most active driver (based on the count field) for each geographic area. In case of
    * a tie we will favor the larger driver value (String comparison).
@@ -26,26 +30,39 @@ trait Reducer {
    *
    * For example:
    * input: driver, session_created_at, id_zone, count
-   *        A, 12:08:15, 1, 2
-   *        B, 12:10:34, 1, 2
-   *        A, 12:28:02, 2, 5
-   *        B, 12:31:51, 2, 4
-   *        B, 12:47:04, 2, 2
-   *        B, 13:00:29, 2, 3
+   * A, 12:08:15, 1, 2
+   * B, 12:10:34, 1, 2
+   * A, 12:28:02, 2, 5
+   * B, 12:31:51, 2, 4
+   * B, 12:47:04, 2, 2
+   * B, 13:00:29, 2, 3
    *
    * output: id_zone, driver, session_created_at, count
-   *         1, B, 12:10:34, 2
-   *         2, A, 12:28:02, 5
+   * 1, B, 12:10:34, 2
+   * 2, A, 12:28:02, 5
    *
    * @note Assume that input data does not contain null values because they are filtered out in previous steps.
-   *
-   * @param input: A Dataset[Row] with schema (among others):
-   *             driver: String, session_created_at: Timestamp, id_zone: Long, count: Int
+   * @param input : A Dataset[Row] with schema (among others):
+   *              driver: String, session_created_at: Timestamp, id_zone: Long, count: Int
    * @return A Dataset[Row] with the most active driver for every zone, with columns:
    *         id_zone: Long, driver: String, session_created_at: Timestamp, count: Int.
    *         A Failure should be returned if the input data doesn't have the correct schema (missing
    *         or wrong typed columns).
    *
    */
-  def reduce(input: Dataset[DriverZoneSession]): Try[Dataset[DriverZoneSession]]
+  override def reduce(input: Dataset[DriverZoneSession]): Try[Dataset[DriverZoneSession]] = {
+    import spark.implicits._
+    import org.apache.spark.sql.expressions.Window
+    val window = Window
+      .partitionBy("id_zone")
+      .orderBy($"count".desc, $"driver".desc)
+
+    val reducedSessions = input
+      .withColumn("rank", functions.rank().over(window).as("rank"))
+        .filter($"rank".equalTo(1))
+        .drop("rank")
+        .as[DriverZoneSession]
+
+    Try(reducedSessions)
+  }
 }

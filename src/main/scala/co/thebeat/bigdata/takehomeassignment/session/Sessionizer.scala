@@ -1,8 +1,9 @@
 package co.thebeat.bigdata.takehomeassignment.session
 
+import co.thebeat.bigdata.takehomeassignment.entity.{AugmentedDriverLocation, DriverZoneSession}
+
 import scala.concurrent.duration.Duration
 import scala.util.Try
-
 import org.apache.spark.sql.{Dataset, Row}
 
 trait Sessionizer {
@@ -64,5 +65,5 @@ trait Sessionizer {
    *         should be returned if one of the required columns has wrong schema (missing or wrong
    *         typed columns) or the duration is negative.
    */
-  def sessionize(input: Dataset[Row], duration: Duration): Try[Dataset[Row]]
+  def sessionize(input: Dataset[AugmentedDriverLocation], duration: Duration): Try[Dataset[DriverZoneSession]]
 }

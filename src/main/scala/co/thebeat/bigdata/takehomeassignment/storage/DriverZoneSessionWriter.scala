@@ -1,11 +1,14 @@
 package co.thebeat.bigdata.takehomeassignment.storage
 
-import co.thebeat.bigdata.takehomeassignment.entity.DriverZoneSession
+import co.thebeat.bigdata.takehomeassignment.entity.{DriverLocation, DriverZoneSession}
+import org.apache.spark.sql.{Dataset, Row, SaveMode, SparkSession}
 
 import scala.util.Try
-import org.apache.spark.sql.{Dataset, Row}
 
-trait Writer {
+/**
+ * Created on 23/02/2021.
+ */
+class DriverZoneSessionWriter(spark: SparkSession) extends Writer {
   /**
    * Tries to write the input Dataset[Row] to the specified path. The path could be either a local
    * or distributed file system.
@@ -18,8 +21,19 @@ trait Writer {
    * Failure should be returned.
    *
    * @param input The Dataset[Row] that will be saved
-   * @param path The location where the input Dataset[Row] will be saved
+   * @param path  The location where the input Dataset[Row] will be saved
    * @return Success if the Dataset[Row] was saved successfully, Failure otherwise
    */
-  def write(input: Dataset[DriverZoneSession], path: String): Try[Unit]
+  override def write(input: Dataset[DriverZoneSession], path: String): Try[Unit] = {
+    Try(
+      input
+        .write
+        .mode(SaveMode.Append)
+        .option("header", value = "true")
+        .option("timestampFormat", DriverLocation.timeStampFormat)
+        .csv(path)
+
+    )
+  }
+
 }
