@@ -2,8 +2,10 @@ package co.thebeat.bigdata.takehomeassignment.geo
 
 import java.io.FileInputStream
 
-import co.thebeat.bigdata.takehomeassignment.entity.{AugmentedDriverLocation, DriverLocation, RawZones, Zone}
-import org.apache.spark.sql.{Dataset, Row, SparkSession}
+import co.thebeat.bigdata.takehomeassignment.entity.{AugmentedDriverLocation, DriverLocation, RawZone, RawZones, Zone}
+import org.apache.spark.sql.catalyst.ScalaReflection
+import org.apache.spark.sql.types.StructType
+import org.apache.spark.sql.{Dataset, Row, SparkSession, functions}
 import org.json4s.DefaultFormats
 import org.json4s.jackson.JsonMethods.parse
 import org.locationtech.jts.geom.impl.CoordinateArraySequence
@@ -15,13 +17,16 @@ import scala.util.{Failure, Success, Try}
 class DriverZoneMapper(spark: SparkSession) extends ZoneMapper {
 
   def initializeZones(path: String): List[Zone] = {
-    val is = new FileInputStream(path)
-    val jsonString = Source.fromInputStream(is).mkString("")
+    import spark.implicits._
+    val rawZones: Array[RawZone]  = spark.read
+      .option("multiline","true")
+      .json(path)
+      .select(functions.explode($"zones").alias("zones"))
+      .select("zones.*")
+      .as[RawZone]
+      .collect()
 
-    implicit val formats: DefaultFormats.type = DefaultFormats
-
-    val rawZones = parse(jsonString).extract[RawZones]
-    rawZones.zones.map(
+    rawZones.map(
       rawZone => {
         val coords: Array[Coordinate] = rawZone.polygon.map(
           latlng => new Coordinate(latlng.lat, latlng.lng)
@@ -32,7 +37,7 @@ class DriverZoneMapper(spark: SparkSession) extends ZoneMapper {
         val polygon = new Polygon(new LinearRing(sequence, factory), Array[LinearRing](), factory)
         Zone(rawZone.id_zone, polygon)
       }
-    )
+    ).toList
 
   }
 

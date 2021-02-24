@@ -17,8 +17,8 @@ object Assignment extends App {
   // Use the SparkSession in any part of the assignment you need one.
   def spark: SparkSession = SparkSession
     .builder()
-    .appName("take-home-assignment")
-    .master("local[1]")
+    .appName("akonale-app")
+//    .master("local[1]")
     .getOrCreate()
 
   // Should read all data from the provided CSV files and return a Dataset[Row] with schema
@@ -61,7 +61,8 @@ object Assignment extends App {
   def runPipeline(): scala.util.Try[Unit] = {
     val inputPath = args(0)
     val outputPath = args(1)
-    val zonesJson = getClass.getResource("/zones.json").toURI.getPath
+    val zonesJson = args(2)
+//    val zonesJson = getClass.getResource("/zones.json").toURI.getPath
     val driverLocations: Try[Dataset[DriverLocation]] = reader.read(inputPath)
     val augmentedDriverLocations = zoneMapper.mapToZone(driverLocations.get, zonesJson)
     val driverZoneSessions = sessionizer.sessionize(augmentedDriverLocations.get, new FiniteDuration(10, TimeUnit.MINUTES))

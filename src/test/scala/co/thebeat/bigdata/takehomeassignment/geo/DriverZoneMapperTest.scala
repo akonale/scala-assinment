@@ -1,7 +1,9 @@
 package co.thebeat.bigdata.takehomeassignment.geo
 
-import co.thebeat.bigdata.takehomeassignment.entity.DriverLocation
-import org.apache.spark.sql.{Encoder, Encoders, SparkSession}
+import co.thebeat.bigdata.takehomeassignment.entity.{DriverLocation, LatLong, RawZone, RawZones, Zone}
+import org.apache.spark.sql.catalyst.ScalaReflection
+import org.apache.spark.sql.types.{ArrayType, DoubleType, IntegerType, MapType, StructType}
+import org.apache.spark.sql.{Encoder, Encoders, SparkSession, functions}
 import org.locationtech.jts.geom.impl.{CoordinateArraySequence, PackedCoordinateSequence}
 import org.locationtech.jts.geom.{Coordinate, GeometryFactory, LinearRing, Point, Polygon, PrecisionModel}
 import org.scalatest.{BeforeAndAfter, FunSuite}
@@ -38,7 +40,34 @@ class DriverZoneMapperTest extends  FunSuite with BeforeAndAfter {
     val polygon = new Polygon(new LinearRing(sequence, factory), Array[LinearRing](), factory)
     val bool = point.within(polygon)
     println(bool)
-    println(new DriverZoneMapper(sparkSession).initializeZones(""))
+    val spark2 = sparkSession
+    import spark2.implicits._
+
+    val schema = ScalaReflection.schemaFor[RawZones].dataType.asInstanceOf[StructType]
+//    new StructType()
+//      .add("zones", ArrayType(MapType(IntegerType, ArrayType(MapType(DoubleType, DoubleType)))))
+    implicit val PolygonEncoder: Encoder[Polygon] = org.apache.spark.sql.Encoders.kryo[Polygon]
+    val frame = sparkSession.read
+      .option("multiline","true")
+//      .schema(schema)
+      .json("/Users/akonale/IdeaProjects/beat/bigdata-challenge/assignment-project/src/main/resources/zones.json")
+      .select(functions.explode($"zones").alias("zones"))
+      .select("zones.*")
+      .as[RawZone]
+        .collect()
+//        map(row => {
+//        val pointsInPolygon = row.getAs[Array[Map[String, Double]]]("polygon")
+//        val coords: List[LatLong] = pointsInPolygon.map(
+//          latlng => new LatLong(latlng("lat"), latlng("lng"))
+//        ).toList
+//        RawZone(row.getInt(0), coords)
+//      }).collect()
+
+//      .select($"id_zone", functions.explode($"polygon").alias("polygon"))
+//    .select($"id_zone", $"polygon.*")
+
+    frame.foreach(rawZone => println((rawZone.id_zone, rawZone.polygon.head, rawZone.polygon.head)))
+
   }
 
   test("testZoneMapper") {
